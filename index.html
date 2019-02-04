@@ -5,8 +5,7 @@
 <textarea id="id1" cols="50" rows="30"></textarea>
 <input id="id2" type="text">
 <button onclick="parse()">parse</button>
-
-</code></pre>
+<pre><code id="res"></code></pre>
 <script src="dist/jq.js"></script>
 <script>
 
@@ -16,7 +15,6 @@ async function parse() {
     const t0 = performance.now();
     const res = await jq.json(json, filter)
     const t1 = performance.now();
-    console.log(res)
-    console.log(`Parsing took ${t1 - t0} ms`)
+    document.querySelector('#res').textContent = JSON.stringify(res);
 }
 </script>
