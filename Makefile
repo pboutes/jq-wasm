@@ -10,7 +10,7 @@ babel := node_modules/.bin/babel
 
 .PHONY: clean
 
-all: js wasm
+all: go js wasm
 
 transpiled_files := $(patsubst src/%,lib/%,$(SRC))
 
@@ -30,6 +30,8 @@ clean:
 
 js: node_modules $(transpiled_files)
 
+go: serve.go
+	go build serve.go -o dist/server
 
 wasm:
 	@echo "============================================="
