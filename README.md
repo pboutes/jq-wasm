@@ -13,7 +13,7 @@ docker build -t . jq-wasm
 make all
 ```
 
-3 (Optional) - Compile go sample go server (you must have the go compiler)
+3 (Optional) - Compile go sample go server (binaries are already included in dist)
 ```
 cd server && make all
 ```
