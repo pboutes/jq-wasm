@@ -7,7 +7,7 @@ Be sure to have docker install on you machine
 
 1 - Create our container which will handle the build process
 ```
-docker build -t . jq-wasm
+docker build -t jq-wasm .
 ```
 
 2 - Transpile js code and compile our wasm binary
