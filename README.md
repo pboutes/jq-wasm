@@ -15,7 +15,7 @@ docker build -t . jq-wasm
 
 3 - Transpile js code and compile our wasm binary
 ```
-docker run --rm -it -v $(pwd):/app jq-wasm make all
+make all
 ```
 
 4 (Optional) - Compile go sample go server (you must have the go compiler)
