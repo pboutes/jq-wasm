@@ -3,6 +3,8 @@ Run jq native library in your browser with [Web Assembly](https://webassembly.or
 
 # Getting started
 
+Be sure to have docker install on you machine
+
 1 - Create our container which will handle the build process
 ```
 docker build -t . jq-wasm
