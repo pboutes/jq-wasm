@@ -6,11 +6,28 @@ CPPFLAGS=$(OPTIMIZE)
 SRC = $(wildcard src/wasm/*.js)
 LIB = $(SRC:src/wasm/%.js=lib/%.js)
 
+DOCKERIMAGES := jq-wasm
+TAGS := $(patsubst %,.%.tag,$(DOCKERIMAGES))
 babel := node_modules/.bin/babel
+NO_COLOR=\x1b[0m
+OK_COLOR=\x1b[32;01m
+OK_STRING=$(OK_COLOR)[OK]$(NO_COLOR)
 
 .PHONY: clean
 
-all: js wasm
+all: docker js wasm
+
+docker: .jq-wasm.tag
+
+$(TAGS): .%.tag: Dockerfile
+	@echo "============================================="
+	@echo "Building docker build environment"
+	@echo "============================================="
+	docker build -t jq-wasm .
+	@touch $@
+	@echo "============================================="
+	@echo "Docker images has been built $(OK_STRING)"
+	@echo "$(NO_COLOR)============================================="	
 
 transpiled_files := $(patsubst src/wasm/%,lib/%,$(SRC))
 
@@ -21,6 +38,9 @@ lib/%: src/wasm/%
 	@echo "============================================="
 	@mkdir -p $(dir $@)
 	$(babel) $< --out-file $@
+	@echo "============================================="
+	@echo "Js files trnaspiled $(OK_STRING)"
+	@echo "$(NO_COLOR)============================================="
 
 node_modules: package.json
 	npm install
@@ -30,9 +50,6 @@ clean:
 
 js: node_modules $(transpiled_files)
 	@mkdir -p dist && cp src/worker/worker.js dist
-
-go: %:
-	@echo $@
 
 wasm:
 	@echo "============================================="
@@ -54,5 +71,17 @@ wasm:
 		-s --post-js /app/lib/post.js \
 		jq.o -o /app/dist/jq.js"
 	@echo "============================================="
-	@echo "Compiling wasm bindings done"
+	@echo "Compiling wasm bindings done $(OK_STRING)"
+	@echo "$(NO_COLOR)============================================="
+
+
+list:= darwin linux
+define LIST_RULE
+run-server-$(1):
 	@echo "============================================="
+	@echo "Starting server"
+	@echo "============================================="
+	./dist/serve_$(1) -dir .
+endef
+
+$(foreach l,$(list),$(eval $(call LIST_RULE,$(l))))

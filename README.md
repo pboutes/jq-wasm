@@ -1,28 +1,36 @@
 # jq-wasm
 Run jq native library in your browser with [Web Assembly](https://webassembly.org/)
 
+# prerequisites
+
+- Docker >= 1.11
+- npm >= 5.x.x
+- go >= 1.10 (optional)
+
 # Getting started
 
 Be sure to have docker install on you machine
 
-1 - Create our container which will handle the build process
-```
-docker build -t jq-wasm .
-```
-
-2 - Transpile js code and compile our wasm binary
+1 - Bootstrap the environment
 ```
 make all
 ```
 
-3 (Optional) - Compile go sample go server (binaries are already included in dist)
+2 (Optional) - Compile go sample go server (binaries are already included in dist)
 ```
 cd server && make all
 ```
 
-4 - Run the server to serve content from the root (depending on your distro)
+3 - Run the server (depending on your distro)
+
+- For linux user:
 ```bash
-./dist/server_{arch} -dir .
+make run-server-linux
+```
+
+- For mac user:
+```bash
+make run-server-darwin
 ```
 
 5 - Check result on http://localhost:8100/
