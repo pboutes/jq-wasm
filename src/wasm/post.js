@@ -1,8 +1,5 @@
 const SPLIT_SEPARATOR = '\n';
 
-// necessary because the default emscriptem exit() logs a lot of text.
-function exit() {}
-
 class jq {
 
   constructor() { }
@@ -11,6 +8,7 @@ class jq {
     util.stdin = jsonstring;
     util.resetBuffers();
     util.openFileSystem();
+    // Passing compact and monochrome flag to jq binary
     Module.callMain(['-c', '-M'].concat(query));
   
     if (util.isResponse()) {
