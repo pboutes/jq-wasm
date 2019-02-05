@@ -3,8 +3,8 @@ LDFLAGS=$(OPTIMIZE)
 CFLAGS=$(OPTIMIZE)
 CPPFLAGS=$(OPTIMIZE)
 
-SRC = $(wildcard src/*.js)
-LIB = $(SRC:src/%.js=lib/%.js)
+SRC = $(wildcard src/wasm/*.js)
+LIB = $(SRC:src/wasm/%.js=lib/%.js)
 
 babel := node_modules/.bin/babel
 
@@ -12,14 +12,14 @@ babel := node_modules/.bin/babel
 
 all: js wasm
 
-transpiled_files := $(patsubst src/%,lib/%,$(SRC))
+transpiled_files := $(patsubst src/wasm/%,lib/%,$(SRC))
 
 lib: $(LIB)
-lib/%: src/%
+lib/%: src/wasm/%
 	@echo "============================================="
 	@echo "Transpiling js files"
 	@echo "============================================="
-	mkdir -p $(dir $@)
+	@mkdir -p $(dir $@)
 	$(babel) $< --out-file $@
 
 node_modules: package.json
@@ -29,6 +29,10 @@ clean:
 	rm -rf lib
 
 js: node_modules $(transpiled_files)
+	@mkdir -p dist && cp src/worker/worker.js dist
+
+go: %:
+	@echo $@
 
 wasm:
 	@echo "============================================="

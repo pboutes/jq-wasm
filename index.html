@@ -3,18 +3,42 @@
 <title>Awesome web page</title>
 
 <textarea id="id1" cols="50" rows="30"></textarea>
-<input id="id2" type="text">
-<button onclick="parse()">parse</button>
+<form>
+    <label for="male">Wonderful search box</label>
+    <input type="text" id="id2">
+  </form> 
 <pre><code id="res"></code></pre>
-<script src="dist/jq.js"></script>
 <script>
+if (window.Worker) {
+    //Create our web worker
+    const worker = new Worker('./dist/worker.js');
 
-async function parse() {
-    const filter = document.querySelector('#id2').value
-    const json = JSON.parse(document.querySelector('#id1').value)
-    const t0 = performance.now();
-    const res = await jq.json(json, filter)
-    const t1 = performance.now();
-    document.querySelector('#res').textContent = JSON.stringify(res);
+    const textElm = document.querySelector('#id1');
+    const queryElm = document.querySelector('#id2');
+    const codeElm = document.querySelector('#res');
+
+    // Just send message on each keyup event
+    queryElm.addEventListener('keyup', e => send());
+
+    const getJson = (data) => {
+        try {
+            return JSON.parse(data);
+        } catch (e) {
+            return {};
+        }
+    }
+
+    // Send json and query to process to our web worker
+    const send = () => {
+        const query = queryElm.value
+        const json = getJson(textElm.value);
+        worker.postMessage({json, query});
+    };
+
+    worker.onmessage = (e) => {
+        codeElm.textContent = JSON.stringify(e.data);
+    } 
+} else {
+    console.warn("No web worker support 😥");
 }
 </script>
