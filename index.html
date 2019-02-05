@@ -1,21 +1,61 @@
 <!doctype html>
 <meta charset=utf-8>
 <title>Awesome web page</title>
+<style>
+.parent {
+    display: flex;
+}
+.parent div {
+    width: 50%;
+}
 
-<textarea id="id1" cols="50" rows="30"></textarea>
-<form>
-    <label for="male">Wonderful search box</label>
-    <input type="text" id="id2">
-  </form> 
-<pre><code id="res"></code></pre>
+</style>
+<div class="parent">
+<div>
+    <textarea id="id1" cols="50" rows="30"></textarea>
+    <form>
+        <label for="male">Wonderful search box</label>
+        <input type="text" id="id2">
+    </form> 
+    <pre><code id="res"></code></pre>
+</div>
+<div>
+
+    <div>
+        <button onclick="basic()">basic example</button>
+    </div>
+
+    <div>
+        <button onclick="advanced()">advanced example</button>
+    </div>
+
+</div>
+</div>
+
+
+
 <script>
 if (window.Worker) {
-    //Create our web worker
-    const worker = new Worker('./dist/worker.js');
 
     const textElm = document.querySelector('#id1');
     const queryElm = document.querySelector('#id2');
     const codeElm = document.querySelector('#res');
+
+    function basic() {
+        textElm.value = JSON.stringify([{"name":"JSON", "good":true}, {"name":"XML", "good":false}])
+        queryElm.value = '.[] | .name';
+        send()
+    }
+
+    function advanced() {
+        textElm.value = JSON.stringify([{"a": 1, "b": 2, "c": {"d": 3, "e": 4}}, {"a": 1, "b": 2, "c": [{"d": 3, "e": 4}]}]);
+        queryElm.value = '.[] as {$a, $b, c: {$d, $e}} ?// {$a, $b, c: [{$d, $e}]} | {$a, $b, $d, $e}';
+        send()
+    }
+
+
+    //Create our web worker
+    const worker = new Worker('./dist/worker.js');
 
     // Just send message on each keyup event
     queryElm.addEventListener('keyup', e => send());
