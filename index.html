@@ -2,55 +2,282 @@
 <meta charset=utf-8>
 <title>Awesome web page</title>
 <style>
-.parent {
-    display: flex;
+
+html { box-sizing: border-box; font-size: 10px; height: 100vh; width: 100vw; }
+*, *:before, *:after { box-sizing: inherit; }
+body, ul, li  { margin: 0; padding: 0; }
+li { list-style: none; }
+p, h1, h2, h3, h4, h5, h6 { margin-top: 0; }
+a { text-decoration: none; }
+input { border-style: none; background: transparent; outline: none; }
+button { padding: 0; background: none; border: none; outline: none; }
+
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+  background-image: radial-gradient(circle at 0% 0%, #373b52, #252736 51%, #1d1e26);
+  overflow: hidden;
 }
-.parent div {
-    width: 50%;
+
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  max-width: 1600px;
+  padding: 0 15px;
+  margin: 0 auto;
+}
+
+@-webkit-keyframes gradient {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
+} 
+
+.query-input {
+    margin-top: 10% !important;
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    border-radius: 2px;
+    padding: 1.4rem 2rem 1.6rem;
+    background: rgba(57, 63, 84, 0.8);
+}
+.query-input:after {
+  content: "";
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+  z-index: 999;
+  height: 2px;
+  border-bottom-left-radius: 2px;
+  border-bottom-right-radius: 2px;
+  background-position: 0% 0%;
+  background: linear-gradient(to right, #B294FF, #57E6E6, #FEFFB8, #57E6E6, #B294FF, #57E6E6);
+  background-size: 500% auto;
+  -webkit-animation: gradient 3s linear infinite;
+          animation: gradient 3s linear infinite;
+}
+
+.query-input input {
+  flex-grow: 1;
+  color: #BFD2FF;
+  font-size: 1.8rem;
+  line-height: 2.4rem;
+  vertical-align: middle;
+}
+.query-input input::-webkit-input-placeholder {
+  color: #7881A1;
+}
+
+button {
+    width: 300px;
+    height: 100px;
+    margin-top: 15px;
+    color: #FEFFB8;
+    font-size: 2.4rem;
+    line-height: 2.4rem;
+    vertical-align: middle;
+    transition: color .25s;
+    border: 3px solid;
+    padding: 1.4rem 2rem 1.6rem;
+    border-radius: 2px;
+}
+
+button:hover {
+  color: #B294FF;
+}
+
+.window { padding: 0 !important; }
+.window-header { 
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    max-width: 600px;
+    padding: 1em; 
+    background: whitesmoke;
+    margin: 0 auto;
+}
+.window-editor { height: 50vh; }
+.window-editor textarea {
+position: relative;
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1em;
+  height:100%;
+  border: none; 
+  border-radius: 6px;
+  resize: none;
+  font-family:'PT Mono', monospace;
+  background: white;
+  white-space:pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.25em;
+}
+
+h1.title {
+    text-align: center;
+    font-size: 2.4rem;
+    font-weight: normal;
+    margin-bottom: 1rem;
+    color: #f5f6ff;
 }
 
 </style>
-<div class="parent">
-<div>
-    <textarea id="id1" cols="50" rows="30"></textarea>
-    <form>
-        <label for="male">Wonderful search box</label>
-        <input type="text" id="id2">
-    </form> 
-    <pre><code id="res"></code></pre>
-</div>
-<div>
 
-    <div>
-        <button onclick="basic()">basic example</button>
-    </div>
+<html>
+    <body>
+        <div class="container">
+            <div style="flex-grow: 1;">
+                <div>
+                    <h1 class="title">JSON INPUT</h1>
+                </div>
+                <div class="window">
+                    <div class="window-editor">
+                        <textarea id="json-text"></textarea>
+                    </div>
+                </div>
+                <div class="query-input">
+                    <input id="query" type="text" placeholder="Enter JQ query"></input>
+                </div>
+            </div>
+            <div style="flex-grow: 1;">
+                <div>
+                    <h1 class="title">PARSING RESULT</h1>
+                </div>
+                <div class="window">
+                    <div class="window-editor">
+                        <textarea id="res"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div style="flex-grow: 1;">
+                <button onclick="basic()">Basic example</button>
+            </div>
+            <div style="flex-grow: 1;">
+                <button onclick="pipe()">Pipe</button>
+            </div>
+            <div style="flex-grow: 1;">
+                <button onclick="destructuring()">Destructuring Alternative Operator</button>
+            </div>
+            <div style="flex-grow: 1;">
+                <button onclick="maths()">Maths expression</button>
+            </div>
+            <div style="flex-grow: 1;">
+                <button onclick="recursive()">Recursive descent</button>
+            </div>
+            <div style="flex-grow: 1;">
+                <button onclick="regexp()">Regexp capture</button>
+            </div>
+            <div style="flex-grow: 1;">
+                <button onclick="construct()">Variables / Symbolic bindings</button>
+            </div>
+            <div style="flex-grow: 1;">
+                <button onclick="defFunction()">Functions definition</button>
+            </div>
+            <div style="flex-grow: 1;">
+                <button onclick="hasKey()">has(key)</button>
+            </div>
+            <div style="flex-grow: 1;">
+                <button onclick="assignment()">Arithmetic assignment</button>
+            </div>
+        </div>
 
-    <div>
-        <button onclick="advanced()">advanced example</button>
-    </div>
-
-</div>
-</div>
+    </body>
+</html>
 
 
 
 <script>
 if (window.Worker) {
 
-    const textElm = document.querySelector('#id1');
-    const queryElm = document.querySelector('#id2');
+    const textElm = document.querySelector('#json-text');
+    const queryElm = document.querySelector('#query');
     const codeElm = document.querySelector('#res');
 
     function basic() {
         textElm.value = JSON.stringify([{"name":"JSON", "good":true}, {"name":"XML", "good":false}])
-        queryElm.value = '.[] | .name';
-        send()
+        queryElm.value = '.[0].name';
+        send();
     }
 
-    function advanced() {
+    function pipe() {
+        textElm.value = JSON.stringify([{"name":"JSON", "good":true}, {"name":"XML", "good":false}])
+        queryElm.value = '.[] | .name';
+        send();
+    }
+
+    function recursive() {
+        textElm.value = JSON.stringify([[{"a":1}]]);
+        queryElm.value = '..|.a?';
+        send();
+    }
+
+    function maths() {
+        textElm.value = '1';
+        queryElm.value = '(. + 2) * 5';
+        send();
+    }
+
+    function destructuring() {
         textElm.value = JSON.stringify([{"a": 1, "b": 2, "c": {"d": 3, "e": 4}}, {"a": 1, "b": 2, "c": [{"d": 3, "e": 4}]}]);
         queryElm.value = '.[] as {$a, $b, c: {$d, $e}} ?// {$a, $b, c: [{$d, $e}]} | {$a, $b, $d, $e}';
         send()
+    }
+
+    function regexp() {
+        textElm.value = '"xyzzy-14"';
+        queryElm.value = 'capture("(?<a>[a-z]+)-(?<n>[0-9]+)")';
+        send();
+    }
+
+    function construct() {
+        textElm.value = JSON.stringify({
+            "posts": [{"title": "Frist psot", "author": "anon"},{"title": "A well-written article", "author": "person1"}],
+            "realnames": {"anon": "Anonymous Coward", "person1": "Person McPherson"}});
+        queryElm.value = '.realnames as $names | .posts[] | {title, author: $names[.author]}';
+        send();
+    }
+
+    function defFunction() {
+        textElm.value = JSON.stringify([[1,2],[10,20]]);
+        queryElm.value = 'def addvalue(f): . + [f]; map(addvalue(.[0]))';
+        send();
+    }
+
+    function hasKey() {
+        textElm.value = JSON.stringify([{"foo": 42}, {}]);
+        queryElm.value = 'map(has("foo"))';
+        send();
+    }
+
+    function assignment() {
+        textElm.value = JSON.stringify({"foo": 42});
+        queryElm.value = '[.foo += 1, .foo *= 2, .foo -=1, .foo /= 2]';
+        send();
     }
 
 
@@ -58,7 +285,7 @@ if (window.Worker) {
     const worker = new Worker('./dist/worker.js');
 
     // Just send message on each keyup event
-    queryElm.addEventListener('keyup', e => send());
+    [textElm, queryElm].forEach(n => n.addEventListener('keyup', e => send()));
 
     const getJson = (data) => {
         try {
@@ -75,8 +302,13 @@ if (window.Worker) {
     };
 
     worker.onmessage = (e) => {
-        codeElm.textContent = JSON.stringify(e.data);
-    } 
+        if (e.data == null || (e.data && e.data.error)) {
+            codeElm.textContent = null;
+        } else {
+            codeElm.textContent = JSON.stringify(e.data);
+        }
+    }
+
 } else {
     console.warn("No web worker support 😥");
 }
