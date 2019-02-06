@@ -1,6 +1,8 @@
 # jq-wasm
 Run the [jq](https://github.com/stedolan/jq) command-line JSON processor in your browser with [Web Assembly](https://webassembly.org/) 👊
 
+![ui](docs/screenshot.png)
+
 # prerequisites
 
 - Docker >= 1.11
