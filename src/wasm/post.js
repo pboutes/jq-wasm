@@ -4,8 +4,8 @@ class jq {
 
   constructor() { }
 
-  static _call = (jsonstring, query) => {
-    util.stdin = jsonstring;
+  static _call = (data, query) => {
+    util.stdin = data;
     util.resetBuffers();
     util.openFileSystem();
     // Passing compact and monochrome flag to jq binary
@@ -23,7 +23,7 @@ class jq {
     return '';
   }
 
-  static _json = (json, query) => {
+  static _parse = (json, query) => {
     const result = jq._call(JSON.stringify(json), query).trim();
     if (!!~result.indexOf(SPLIT_SEPARATOR)) {
       return result
@@ -34,10 +34,10 @@ class jq {
     }
   } 
 
-  static json(...args) {
+  static parse = json => query => {
     return new Promise((resolve, reject) => {
       try {
-        resolve(jq._json(...args))
+        resolve(jq._parse(json, query))
       } catch (e) {
         reject(e);
       }
