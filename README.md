@@ -3,6 +3,8 @@ Run the [jq](https://github.com/stedolan/jq) command-line JSON processor in your
 
 ![ui](docs/screenshot.png)
 
+This is inspired from [jq-web](https://github.com/fiatjaf/jq-web).
+
 # prerequisites
 
 - Docker >= 1.11
