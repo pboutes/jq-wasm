@@ -303,9 +303,9 @@ if (window.Worker) {
 
     worker.onmessage = (e) => {
         if (e.data == null || (e.data && e.data.error)) {
-            codeElm.textContent = null;
+            codeElm.value = null;
         } else {
-            codeElm.textContent = JSON.stringify(e.data);
+            codeElm.value = JSON.stringify(e.data);
         }
     }
 

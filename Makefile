@@ -47,6 +47,7 @@ node_modules: package.json
 
 clean:
 	rm -rf lib
+	rm .jq-wasm.tag
 
 js: node_modules $(transpiled_files)
 	@mkdir -p dist && cp src/worker/worker.js dist
@@ -56,7 +57,7 @@ wasm:
 	@echo "Compiling wasm bindings"
 	@echo "============================================="
 	mkdir -p dist
-	docker run --rm -it -v $(PWD):/app jq-wasm /bin/bash -c "cd /src/jq-1.6 && \
+	docker run --platform linux/amd64  --rm -it -v $(PWD):/app jq-wasm /bin/bash -c "cd / && \
 	emcc \
 		$(OPTIMIZE) \
 		--llvm-lto 3 \
