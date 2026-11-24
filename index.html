@@ -6,6 +6,7 @@
 <title>jq-wasm</title>
 <style>
 :root {
+    color-scheme: light dark;
     --bg: #f8f9fb;
     --surface: #ffffff;
     --border: #e2e8f0;
@@ -14,6 +15,19 @@
     --accent: #c2410c;
     --error: #b91c1c;
     --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* Dark palette when the system asks for it. */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0b1120;
+        --surface: #111827;
+        --border: #1f2937;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --accent: #fdba74;
+        --error: #f87171;
+    }
 }
 
 *, *::before, *::after { box-sizing: border-box; }
