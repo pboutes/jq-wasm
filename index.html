@@ -144,6 +144,17 @@ h1.title {
     color: #f5f6ff;
 }
 
+.input-error {
+    max-width: 600px;
+    min-height: 2rem;
+    margin: 0.8rem auto 0;
+    color: #ff9b9b;
+    font-family: 'PT Mono', monospace;
+    font-size: 1.4rem;
+    line-height: 2rem;
+    overflow-wrap: anywhere;
+}
+
 </style>
 
 <html>
@@ -158,6 +169,7 @@ h1.title {
                         <textarea id="json-text"></textarea>
                     </div>
                 </div>
+                <p id="json-error" class="input-error" aria-live="polite"></p>
                 <div class="query-input">
                     <input id="query" type="text" placeholder="Enter JQ query"></input>
                 </div>
@@ -287,21 +299,36 @@ if (window.Worker) {
     // Just send message on each keyup event
     [textElm, queryElm].forEach(n => n.addEventListener('keyup', e => send()));
 
-    const getJson = (data) => {
-        try {
-            return JSON.parse(data);
-        } catch (e) {
-            return {};
-        }
-    }
+    const jsonErrorElm = document.querySelector('#json-error');
+    // False while the JSON input is blank or invalid: replies still in flight
+    // for an earlier input must not overwrite the cleared result.
+    let inputOk = false;
+
+    // Show invisible characters (zero-width space, BOM, no-break space...)
+    // in error messages as their code point, e.g. U+200B.
+    const showInvisible = (text) => text.replace(/(?! )[\p{Cf}\p{Z}]/gu,
+        ch => 'U+' + ch.codePointAt(0).toString(16).toUpperCase().padStart(4, '0'));
+
     // Send json and query to process to our web worker
     const send = () => {
-        const query = queryElm.value
-        const json = getJson(textElm.value);
-        worker.postMessage({json, query});
+        const text = textElm.value;
+        let json;
+        try {
+            json = JSON.parse(text);
+        } catch (e) {
+            // Blank input is not an error, there is just nothing to process yet.
+            jsonErrorElm.textContent = text.trim() ? `Invalid JSON: ${showInvisible(e.message)}` : '';
+            inputOk = false;
+            codeElm.value = '';
+            return;
+        }
+        jsonErrorElm.textContent = '';
+        inputOk = true;
+        worker.postMessage({json, query: queryElm.value});
     };
 
     worker.onmessage = (e) => {
+        if (!inputOk) return;
         if (e.data == null || (e.data && e.data.error)) {
             codeElm.value = null;
         } else {
