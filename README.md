@@ -1,4 +1,7 @@
 # jq-wasm
+
+[![Tests](https://github.com/pboutes/jq-wasm/actions/workflows/test.yml/badge.svg)](https://github.com/pboutes/jq-wasm/actions/workflows/test.yml)
+
 Run the [jq](https://github.com/jqlang/jq) command-line JSON processor in your browser with [Web Assembly](https://webassembly.org/) 👊
 
 ![ui](docs/screenshot.png)
