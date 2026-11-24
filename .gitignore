@@ -2,3 +2,4 @@ dist/*
 !dist/.gitkeep
 !dist/serve_*
 .jq-*
+/site/

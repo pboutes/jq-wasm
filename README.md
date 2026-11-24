@@ -4,6 +4,8 @@
 
 A [jq](https://jqlang.org) playground that runs entirely in your browser: the real jq, compiled from C to [WebAssembly](https://webassembly.org).
 
+**Try it: https://pboutes.github.io/jq-wasm/**
+
 ![The playground: a jq query on top, the JSON input on the left and jq's output on the right](docs/screenshot.png)
 
 ## Why
@@ -64,6 +66,8 @@ This runs both test suites in Docker, so no local Node.js or Go is needed:
 - `make test-server` runs the tests of the Go file server.
 
 GitHub Actions runs both on every push to `master` and on every pull request.
+
+Every push to `master` also publishes the playground to GitHub Pages ([`.github/workflows/pages.yml`](.github/workflows/pages.yml)): it builds jq, runs the module tests, then deploys what `make site` collects, which is `index.html` and the three files it loads from `dist/`.
 
 The file server that `make run-server` starts is a small Go program, prebuilt in `dist/` for macOS and Linux on amd64 and arm64. To rebuild it:
 

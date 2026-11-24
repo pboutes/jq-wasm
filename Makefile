@@ -26,7 +26,7 @@ EMCC_FLAGS := \
 SERVER_OS   := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 SERVER_ARCH := $(shell uname -m | sed -e 's/x86_64/amd64/' -e 's/aarch64/arm64/')
 
-.PHONY: all docker js wasm clean run-server test test-jq test-server
+.PHONY: all docker js wasm clean run-server site test test-jq test-server
 
 all: docker js wasm
 
@@ -50,11 +50,20 @@ dist/jq.js: .jq-wasm.tag Makefile src/wasm/pre.js src/wasm/post.js
 
 clean:
 	rm -f dist/jq.js dist/jq.wasm dist/worker.js .jq-wasm.tag
+	rm -rf site
 
 # dist/ is not in git: rebuild anything older than its sources before
 # serving, so a new index.html never runs against an old worker or jq.js.
 run-server: dist/jq.js dist/worker.js
 	./dist/serve_$(SERVER_OS)_$(SERVER_ARCH) -dir .
+
+# Static copy of the playground for GitHub Pages: the page and the three
+# files it loads, without the Go server binaries.
+site: dist/jq.js dist/worker.js
+	rm -rf site
+	mkdir -p site/dist
+	cp index.html site/
+	cp dist/jq.js dist/jq.wasm dist/worker.js site/dist/
 
 test: test-jq test-server
 
