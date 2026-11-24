@@ -2,76 +2,75 @@
 
 [![Tests](https://github.com/pboutes/jq-wasm/actions/workflows/test.yml/badge.svg)](https://github.com/pboutes/jq-wasm/actions/workflows/test.yml)
 
-Run the [jq](https://github.com/jqlang/jq) command-line JSON processor in your browser with [Web Assembly](https://webassembly.org/) 👊
+A [jq](https://jqlang.org) playground that runs entirely in your browser: the real jq, compiled from C to [WebAssembly](https://webassembly.org).
 
-![ui](docs/screenshot.png)
+![The playground: a jq query on top, the JSON input on the left and jq's output on the right](docs/screenshot.png)
 
-This is inspired from [jq-web](https://github.com/fiatjaf/jq-web).
+## Why
 
-# prerequisites
+**In the browser.** Try a jq query without installing anything. No server runs your queries, so your JSON never leaves your machine, and you can paste data you would not send anywhere. Once the page has loaded, queries need no network.
 
-- Docker (everything is built in containers)
+**The real jq, not a rewrite.** jq is written in C. A JavaScript rewrite would have to chase its behaviour one feature at a time and would still drift from it. Compiling the C source instead gives the same parser, the same built-in functions, regular expressions included, and the same error messages as the jq in your terminal. Moving to a new jq release means changing a version and a checksum in the [`Dockerfile`](Dockerfile).
 
-Versions used: jq 1.8.2, Emscripten SDK 7.0.1, Go 1.27.4. They are pinned in the `Dockerfile` and `server/Makefile`.
+## Run it locally
 
-# Getting started
+You only need Docker: everything is built in containers.
 
-1 - Build jq to wasm (`dist/jq.js`, `dist/jq.wasm`, `dist/worker.js`)
 ```bash
-make all
+make all          # compile jq to WebAssembly into dist/
+make run-server   # serve the playground on http://localhost:8100
 ```
 
-2 (Optional) - Rebuild the Go static server (binaries for macOS and Linux, amd64 and arm64, are already included in `dist`)
-```bash
-cd server && make all
+Then open http://localhost:8100. `make run-server` first rebuilds anything in `dist/` that is older than its sources.
+
+## How it works
+
+```text
+build   jq's C source ──Emscripten──▶ dist/jq.wasm + dist/jq.js
+
+run     index.html ──{json, query}───────────▶ dist/worker.js
+                   ◀──{ok, result} or {ok, error}──   │
+                                                      ▼
+                                      jq main(-c -M <query>)
+                                      stdin  ◀ the JSON, from memory
+                                      stdout ▶ the result, into memory
 ```
 
-3 - Run the server (it picks the binary for your OS and CPU)
-```bash
-make run-server
-```
+- The [`Dockerfile`](Dockerfile) builds jq from its release tarball with Emscripten, together with its bundled regex library.
+- Each query is one call to jq's own `main()`, as if you had run `jq -c -M '<query>'` in a terminal. [`src/wasm/pre.js`](src/wasm/pre.js) connects stdin, stdout and stderr to in-memory buffers, and [`src/wasm/post.js`](src/wasm/post.js) runs `main()` and parses what jq printed.
+- Calling `main()` over and over needs two fixes, both in `post.js`. jq closes stdout when it finishes, so stdout is reopened before each run. jq also ends with `exit()`, which leaves its C stack behind, so the stack pointer is put back after each run.
+- jq runs in a [Web Worker](src/worker/worker.js), so typing stays smooth. The page runs the query 150 ms after the last keystroke.
 
-4 - Check result on http://localhost:8100/
+## Limitations
 
-The page needs a browser with module Web Worker support (Chrome 80+, Safari 15+, Firefox 114+).
+- About 1 MB to download, mostly `jq.wasm` (about 350 KB gzipped).
+- Needs a browser with module Web Workers: Chrome 80+, Safari 15+ or Firefox 114+.
+- The JSON goes through JavaScript on its way to jq, so integers beyond 2^53 lose precision: `100000000000000000001` becomes `100000000000000000000`. The jq command line keeps them exact.
+- Two known bugs, tracked as `todo` tests in [`test/jq.test.mjs`](test/jq.test.mjs):
+  - when a query returns several arrays, they are merged into one: `.[]` on `[[1,2],[3]]` shows `[1,2,3]`;
+  - a query with no output, such as `empty`, shows an error instead of nothing.
 
-# Tests
+## Development
+
+Versions are pinned: jq 1.8.2 and Emscripten SDK 7.0.1 in the [`Dockerfile`](Dockerfile), Go 1.27.4 in [`server/Makefile`](server/Makefile).
 
 ```bash
 make test
 ```
 
-This runs both suites in Docker, so no local Node.js or Go is needed:
+This runs both test suites in Docker, so no local Node.js or Go is needed:
 
-- `make test-jq`: builds `dist/jq.js` if needed, then runs `test/*.test.mjs` with Node's built-in test runner against it. It covers the page examples, Unicode input, jq errors, and many queries in a row on the same module. Known bugs are marked `todo`, so they show in the report without failing it.
-- `make test-server`: runs the Go server tests (`go test` in `server/`).
+- `make test-jq` runs `test/*.test.mjs` with Node's built-in test runner against the built `dist/jq.js`. It covers the page examples, Unicode input, jq errors, many queries in a row, and the rebuild rules of `make run-server`.
+- `make test-server` runs the tests of the Go file server.
 
-GitHub Actions runs both on every push to `master` and on every pull request (`.github/workflows/test.yml`).
+GitHub Actions runs both on every push to `master` and on every pull request.
 
-# FAQ
+The file server that `make run-server` starts is a small Go program, prebuilt in `dist/` for macOS and Linux on amd64 and arm64. To rebuild it:
 
-## What is WebAssembly ? 
+```bash
+cd server && make all
+```
 
-> WebAssembly (abbreviated Wasm) is a binary instruction format for a stack-based virtual machine. Wasm is designed as a portable target for compilation of high-level languages like C/C++/Rust, enabling deployment on the web for client and server applications.
+## License
 
-WebAssembly is efficient, fast, safe, and a lot more. Get more info on [here](https://webassembly.org/).
-
-## But why doing this ?
-
-![But why?](https://media.giphy.com/media/1M9fmo1WAFVK0/giphy.gif)
-
-In this use case, we wanted to parse some json expression by using the famous [jq](https://github.com/stedolan/jq) syntax.
-But, as you may know, this tool is written in C, so we have two options:
-- rewrite a parser library that will try to mimic the jq behavior, will we get the same functionalities? The same performance? 
-- find a way to use the native code, in order to leverage the existing library, a native speed execution (guess what we choose 😛)
-
-## So, what's in the bag?
-
-So, the main idea is to compile the existing code to the wasm format, and then loading it in the browser. Simple, no?
-
-To compile our code to the wasm format, we have serveral options:
-- directly use the [LLVM](http://llvm.org/) toolchain (TL;DR **HARD**)
-- or use [emscripten](https://emscripten.org/), initially known to be a C to [asm.js](http://asmjs.org/) compiler, he can now target Wasm, and leverage LLVM internally (TL;DR **TAKE THIS**)
-
-[To be continued]
-
+[MIT](LICENSE). jq, which the build downloads and compiles, comes with its own MIT license.
