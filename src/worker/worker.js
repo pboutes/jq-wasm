@@ -1,12 +1,14 @@
-importScripts('./jq.js');
+// Module worker: loads jq once and runs every query off the main thread.
+import createJq from './jq.js';
+
+const jqReady = createJq();
 
 onmessage = async (event) => {
     const {json, query} = event.data;
-    // Interact with our web assembly module
     try {
-        const result = await jq.parse(json)(query);
-        postMessage(result);
+        const jq = await jqReady;
+        postMessage(await jq.parse(json)(query));
     } catch (e) {
-        postMessage({error: e.message});
+        postMessage({error: String(e && e.message ? e.message : e)});
     }
 }

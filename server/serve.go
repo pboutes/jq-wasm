@@ -4,16 +4,15 @@ import (
 	"flag"
 	"log"
 	"net/http"
-	"regexp"
+	"strings"
 )
 
 var dir = flag.String("dir", "", "directory to serve")
-var tFile = regexp.MustCompile("\\.wasm$")
 
-func myfileserver(h http.Handler) func(http.ResponseWriter, *http.Request) {
+// Browsers only compile wasm while it downloads when it is served as application/wasm.
+func wasmFileServer(h http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ruri := r.RequestURI
-		if tFile.MatchString(ruri) {
+		if strings.HasSuffix(r.URL.Path, ".wasm") {
 			w.Header().Set("Content-Type", "application/wasm")
 		}
 		h.ServeHTTP(w, r)
@@ -26,10 +25,9 @@ func main() {
 	port := "8100"
 
 	if *dir == "" {
-		panic("please specify a directory to serve")
+		log.Fatal("please specify a directory to serve with -dir")
 	}
-	handler := myfileserver(http.FileServer(http.Dir(*dir)))
-	http.HandleFunc("/", handler)
+	http.Handle("/", wasmFileServer(http.FileServer(http.Dir(*dir))))
 
 	log.Printf("Serving on HTTP port: %s and directory %s\n", port, *dir)
 	log.Fatal(http.ListenAndServe(":"+port, nil))

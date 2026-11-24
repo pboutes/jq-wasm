@@ -282,7 +282,7 @@ if (window.Worker) {
 
 
     //Create our web worker
-    const worker = new Worker('./dist/worker.js');
+    const worker = new Worker('./dist/worker.js', { type: 'module' });
 
     // Just send message on each keyup event
     [textElm, queryElm].forEach(n => n.addEventListener('keyup', e => send()));

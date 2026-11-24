@@ -1,5 +1,5 @@
 # jq-wasm
-Run the [jq](https://github.com/stedolan/jq) command-line JSON processor in your browser with [Web Assembly](https://webassembly.org/) 👊
+Run the [jq](https://github.com/jqlang/jq) command-line JSON processor in your browser with [Web Assembly](https://webassembly.org/) 👊
 
 ![ui](docs/screenshot.png)
 
@@ -7,37 +7,30 @@ This is inspired from [jq-web](https://github.com/fiatjaf/jq-web).
 
 # prerequisites
 
-- Docker >= 1.11
-- npm >= 5.x.x
-- go >= 1.10 (optional)
+- Docker (everything is built in containers)
+
+Versions used: jq 1.8.2, Emscripten SDK 7.0.1, Go 1.27.4. They are pinned in the `Dockerfile` and `server/Makefile`.
 
 # Getting started
 
-Be sure to have docker install on you machine
-
-1 - Bootstrap the environment
-```
+1 - Build jq to wasm (`dist/jq.js`, `dist/jq.wasm`, `dist/worker.js`)
+```bash
 make all
 ```
 
-2 (Optional) - Compile go sample go server (binaries are already included in dist)
-```
+2 (Optional) - Rebuild the Go static server (binaries for macOS and Linux, amd64 and arm64, are already included in `dist`)
+```bash
 cd server && make all
 ```
 
-3 - Run the server (depending on your distro)
-
-- For linux user:
+3 - Run the server (it picks the binary for your OS and CPU)
 ```bash
-make run-server-linux
+make run-server
 ```
 
-- For mac user:
-```bash
-make run-server-darwin
-```
+4 - Check result on http://localhost:8100/
 
-5 - Check result on http://localhost:8100/
+The page needs a browser with module Web Worker support (Chrome 80+, Safari 15+, Firefox 114+).
 
 # FAQ
 

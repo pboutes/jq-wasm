@@ -1,14 +1,17 @@
+# Builds the static file server for each OS/arch into ../dist with the
+# official Go image, so no local Go install is needed.
 
-.PHONY: all
-all: darwin linux
-list:= darwin linux
+GO_IMAGE := golang:1.27.4-alpine
+TARGETS  := darwin_amd64 darwin_arm64 linux_amd64 linux_arm64
 
-define LIST_RULE
-$(1):
-	@echo "Building $$@ image"
-	@mkdir -p ../dist/
-	@docker run --rm -v $(PWD):/usr/src/app -w /usr/src/app -e CGO_ENABLED=0 -e GOOS=$$@ golang:1.11.5-alpine go build -a -ldflags '-extldflags "-static"' -o serve_$$@ serve.go
-	@mv serve_$$@ ../dist/
-endef
+.PHONY: all $(TARGETS)
 
-$(foreach l,$(list),$(eval $(call LIST_RULE,$(l))))
+all: $(TARGETS)
+
+$(TARGETS):
+	@mkdir -p ../dist
+	docker run --rm -u $(shell id -u):$(shell id -g) -v $(CURDIR):/src -w /src \
+		-e HOME=/tmp -e CGO_ENABLED=0 \
+		-e GOOS=$(word 1,$(subst _, ,$@)) -e GOARCH=$(word 2,$(subst _, ,$@)) \
+		$(GO_IMAGE) go build -trimpath -ldflags '-s -w' -o serve_$@ .
+	mv serve_$@ ../dist/
