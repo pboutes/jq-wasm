@@ -26,7 +26,7 @@ EMCC_FLAGS := \
 SERVER_OS   := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 SERVER_ARCH := $(shell uname -m | sed -e 's/x86_64/amd64/' -e 's/aarch64/arm64/')
 
-.PHONY: all docker js wasm clean run-server
+.PHONY: all docker js wasm clean run-server test test-jq test-server
 
 all: docker js wasm
 
@@ -53,3 +53,12 @@ clean:
 
 run-server:
 	./dist/serve_$(SERVER_OS)_$(SERVER_ARCH) -dir .
+
+test: test-jq test-server
+
+# Runs test/*.test.mjs against dist/jq.js with the Node.js of the build image.
+test-jq: dist/jq.js
+	$(DOCKER_RUN) node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test 'test/*.test.mjs'
+
+test-server:
+	$(MAKE) -C server test

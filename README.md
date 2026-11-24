@@ -32,6 +32,19 @@ make run-server
 
 The page needs a browser with module Web Worker support (Chrome 80+, Safari 15+, Firefox 114+).
 
+# Tests
+
+```bash
+make test
+```
+
+This runs both suites in Docker, so no local Node.js or Go is needed:
+
+- `make test-jq`: builds `dist/jq.js` if needed, then runs `test/*.test.mjs` with Node's built-in test runner against it. It covers the page examples, Unicode input, jq errors, and many queries in a row on the same module. Known bugs are marked `todo`, so they show in the report without failing it.
+- `make test-server`: runs the Go server tests (`go test` in `server/`).
+
+GitHub Actions runs both on every push to `master` and on every pull request (`.github/workflows/test.yml`).
+
 # FAQ
 
 ## What is WebAssembly ? 

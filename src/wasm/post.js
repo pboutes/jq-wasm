@@ -19,11 +19,16 @@ const jqCall = (input, query) => {
   // back, or every query leaks ~3 KB of the 64 KB stack and jq crashes
   // after a dozen or so runs.
   const stackPointer = stackSave();
+  // Under Node.js, Emscripten copies jq's exit status into process.exitCode.
+  // Put the host's value back: a query that fails must not fail the process.
+  const nodeProcess = globalThis.process?.versions?.node ? globalThis.process : null;
+  const exitCode = nodeProcess?.exitCode;
   try {
     // Compact (-c) and monochrome (-M) output.
     callMain(['-c', '-M', query]);
   } finally {
     stackRestore(stackPointer);
+    if (nodeProcess) nodeProcess.exitCode = exitCode;
   }
 
   if (jqStdio.stdout.length) {
