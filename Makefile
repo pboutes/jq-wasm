@@ -51,7 +51,9 @@ dist/jq.js: .jq-wasm.tag Makefile src/wasm/pre.js src/wasm/post.js
 clean:
 	rm -f dist/jq.js dist/jq.wasm dist/worker.js .jq-wasm.tag
 
-run-server:
+# dist/ is not in git: rebuild anything older than its sources before
+# serving, so a new index.html never runs against an old worker or jq.js.
+run-server: dist/jq.js dist/worker.js
 	./dist/serve_$(SERVER_OS)_$(SERVER_ARCH) -dir .
 
 test: test-jq test-server
