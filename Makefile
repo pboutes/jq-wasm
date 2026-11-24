@@ -1,88 +1,55 @@
-OPTIMIZE="-O3"
-LDFLAGS=$(OPTIMIZE)
-CFLAGS=$(OPTIMIZE)
-CPPFLAGS=$(OPTIMIZE)
+# jq's C sources are compiled inside an Emscripten Docker image (see
+# Dockerfile), then linked here with the JS glue in src/wasm into
+# dist/jq.js + dist/jq.wasm.
 
-SRC = $(wildcard src/wasm/*.js)
-LIB = $(SRC:src/wasm/%.js=lib/%.js)
+DOCKER_IMAGE := jq-wasm
+DOCKER_RUN   := docker run --rm -u $(shell id -u):$(shell id -g) -v $(CURDIR):/app -w /app $(DOCKER_IMAGE)
 
-DOCKERIMAGES := jq-wasm
-TAGS := $(patsubst %,.%.tag,$(DOCKERIMAGES))
-babel := node_modules/.bin/babel
-NO_COLOR=\x1b[0m
-OK_COLOR=\x1b[32;01m
-OK_STRING=$(OK_COLOR)[OK]$(NO_COLOR)
+OPTIMIZE := -O3
 
-.PHONY: clean
+# MODULARIZE + EXPORT_ES6: dist/jq.js default-exports createJq(), which
+# resolves to the module instance once the wasm is ready.
+# INVOKE_RUN=0: don't run main() on load; post.js calls it once per query.
+# stackSave/stackRestore: post.js uses them to undo the stack that jq's
+# exit() leaves behind after each run.
+EMCC_FLAGS := \
+	$(OPTIMIZE) \
+	-sALLOW_MEMORY_GROWTH=1 \
+	-sMODULARIZE=1 \
+	-sEXPORT_ES6=1 \
+	-sEXPORT_NAME=createJq \
+	-sINVOKE_RUN=0 \
+	-sEXPORTED_RUNTIME_METHODS=callMain,FS,stackSave,stackRestore \
+	--pre-js src/wasm/pre.js \
+	--post-js src/wasm/post.js
+
+SERVER_OS   := $(shell uname -s | tr '[:upper:]' '[:lower:]')
+SERVER_ARCH := $(shell uname -m | sed -e 's/x86_64/amd64/' -e 's/aarch64/arm64/')
+
+.PHONY: all docker js wasm clean run-server
 
 all: docker js wasm
 
 docker: .jq-wasm.tag
 
-$(TAGS): .%.tag: Dockerfile
-	@echo "============================================="
-	@echo "Building docker build environment"
-	@echo "============================================="
-	docker build -t jq-wasm .
+.jq-wasm.tag: Dockerfile
+	docker build -t $(DOCKER_IMAGE) .
 	@touch $@
-	@echo "============================================="
-	@echo "Docker images has been built $(OK_STRING)"
-	@echo "$(NO_COLOR)============================================="	
 
-transpiled_files := $(patsubst src/wasm/%,lib/%,$(SRC))
+js: dist/worker.js
 
-lib: $(LIB)
-lib/%: src/wasm/%
-	@echo "============================================="
-	@echo "Transpiling js files"
-	@echo "============================================="
-	@mkdir -p $(dir $@)
-	$(babel) $< --out-file $@
-	@echo "============================================="
-	@echo "Js files trnaspiled $(OK_STRING)"
-	@echo "$(NO_COLOR)============================================="
+dist/worker.js: src/worker/worker.js
+	@mkdir -p dist
+	cp $< $@
 
-node_modules: package.json
-	npm install
+wasm: dist/jq.js
+
+dist/jq.js: .jq-wasm.tag Makefile src/wasm/pre.js src/wasm/post.js
+	@mkdir -p dist
+	$(DOCKER_RUN) emcc /jq/main.o /jq/libjq.a /jq/libonig.a $(EMCC_FLAGS) -o dist/jq.js
 
 clean:
-	rm -rf lib
-	rm .jq-wasm.tag
+	rm -f dist/jq.js dist/jq.wasm dist/worker.js .jq-wasm.tag
 
-js: node_modules $(transpiled_files)
-	@mkdir -p dist && cp src/worker/worker.js dist
-
-wasm:
-	@echo "============================================="
-	@echo "Compiling wasm bindings"
-	@echo "============================================="
-	mkdir -p dist
-	docker run --platform linux/amd64  --rm -it -v $(PWD):/app jq-wasm /bin/bash -c "cd / && \
-	emcc \
-		$(OPTIMIZE) \
-		--llvm-lto 3 \
-		--llvm-opts 3 \
-		-s ALLOW_MEMORY_GROWTH=1 \
-		-s ERROR_ON_UNDEFINED_SYMBOLS=0 \
-		-s MALLOC=dlmalloc \
-		-s MODULARIZE_INSTANCE=1 \
-		-s EXPORT_NAME="jq" \
-		-s WASM=1 \
-		-s --pre-js /app/lib/pre.js \
-		-s --post-js /app/lib/post.js \
-		jq.o -o /app/dist/jq.js"
-	@echo "============================================="
-	@echo "Compiling wasm bindings done $(OK_STRING)"
-	@echo "$(NO_COLOR)============================================="
-
-
-list:= darwin linux
-define LIST_RULE
-run-server-$(1):
-	@echo "============================================="
-	@echo "Starting server"
-	@echo "============================================="
-	./dist/serve_$(1) -dir .
-endef
-
-$(foreach l,$(list),$(eval $(call LIST_RULE,$(l))))
+run-server:
+	./dist/serve_$(SERVER_OS)_$(SERVER_ARCH) -dir .

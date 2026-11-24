@@ -1,5 +1,4 @@
-node_modules
-lib
-dist/
+dist/*
+!dist/.gitkeep
 !dist/serve_*
 .jq-*

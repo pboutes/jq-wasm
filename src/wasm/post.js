@@ -1,46 +1,48 @@
-const SPLIT_SEPARATOR = '\n';
+// Included inside the Emscripten module factory, after the generated runtime.
+// Adds `parse(json)(query)` to the module instance that createJq() resolves to.
 
-class jq {
+const JQ_SPLIT_SEPARATOR = '\n';
 
-  constructor() { }
+// jq's main() fclose()s stdout before exiting, so put back any standard
+// stream that is gone. FS.open() takes the lowest free descriptor, which
+// restores them on fds 1 and 2.
+const jqReopenStdStreams = () => {
+  if (!FS.getStream(1)) FS.open('/dev/stdout', 'w');
+  if (!FS.getStream(2)) FS.open('/dev/stderr', 'w');
+};
 
-  static _call = (data, query) => {
-    util.stdin = data;
-    util.resetBuffers();
-    util.openFileSystem();
-    // Passing compact and monochrome flag to jq binary
-    Module.callMain(['-c', '-M'].concat(query));
-  
-    if (util.isResponse()) {
-      return util.fromByteArray(util.output.buffer).trim();
-    }
-  
-    if (util.isError()) {
-      const err = util.fromByteArray(util.error.buffer);
-      throw new Error(err);
-    }
-  
-    return '';
+const jqCall = (input, query) => {
+  jqStdio.reset(input);
+  jqReopenStdStreams();
+  // jq's main() ends with exit(), which Emscripten implements by throwing
+  // through the wasm frames, so the C stack pointer is never popped. Put it
+  // back, or every query leaks ~3 KB of the 64 KB stack and jq crashes
+  // after a dozen or so runs.
+  const stackPointer = stackSave();
+  try {
+    // Compact (-c) and monochrome (-M) output.
+    callMain(['-c', '-M', query]);
+  } finally {
+    stackRestore(stackPointer);
   }
 
-  static _parse = (json, query) => {
-    const result = jq._call(JSON.stringify(json), query).trim();
-    if (!!~result.indexOf(SPLIT_SEPARATOR)) {
-      return result
-        .split(SPLIT_SEPARATOR)
-        .reduce((acc, line) => acc.concat(JSON.parse(line)), []);
-    } else {
-      return JSON.parse(result);
-    }
-  } 
-
-  static parse = json => query => {
-    return new Promise((resolve, reject) => {
-      try {
-        resolve(jq._parse(json, query))
-      } catch (e) {
-        reject(e);
-      }
-    })
+  if (jqStdio.stdout.length) {
+    return jqStdio.decode(jqStdio.stdout).trim();
   }
-}
+  if (jqStdio.stderr.length) {
+    throw new Error(jqStdio.decode(jqStdio.stderr));
+  }
+  return '';
+};
+
+const jqParse = (json, query) => {
+  const result = jqCall(JSON.stringify(json), query).trim();
+  if (result.includes(JQ_SPLIT_SEPARATOR)) {
+    return result
+      .split(JQ_SPLIT_SEPARATOR)
+      .reduce((acc, line) => acc.concat(JSON.parse(line)), []);
+  }
+  return JSON.parse(result);
+};
+
+Module['parse'] = (json) => async (query) => jqParse(json, query);
