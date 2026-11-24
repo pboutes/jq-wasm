@@ -245,13 +245,14 @@ if (!window.Worker) {
         outputStatusElm.textContent = isError ? text : '';
     };
 
-    // Send json and query to the worker.
+    // Send the input text and the query to the worker.
     const send = () => {
         clearTimeout(pendingSend);
         const text = inputElm.value;
-        let json;
         try {
-            json = JSON.parse(text);
+            // Only to check the input and explain what is wrong with it: jq
+            // gets the text itself, so numbers reach it exactly as written.
+            JSON.parse(text);
         } catch (e) {
             // Blank input is not an error, there is just nothing to process yet.
             inputErrorElm.textContent = text.trim() ? `invalid json: ${showInvisible(e.message)}` : '';
@@ -261,14 +262,14 @@ if (!window.Worker) {
         }
         inputErrorElm.textContent = '';
         inputOk = true;
-        worker.postMessage({json, query: queryElm.value});
+        worker.postMessage({input: text, query: queryElm.value});
     };
 
-    // Show the result pretty-printed, or jq's own error message.
+    // Show what jq printed, as it printed it, or jq's own error message.
     worker.onmessage = (e) => {
         if (!inputOk) return;
-        const {ok, result, error} = e.data;
-        showOutput(ok ? JSON.stringify(result, null, 2) : error.trim(), !ok);
+        const {ok, output, error} = e.data;
+        showOutput(ok ? output.replace(/\n$/, '') : error.trim(), !ok);
     };
 
     // An example link stays marked until the query or input is edited.
