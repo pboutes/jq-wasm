@@ -20,7 +20,6 @@ EMCC_FLAGS := \
 	-sEXPORT_NAME=createJq \
 	-sINVOKE_RUN=0 \
 	-sEXPORTED_RUNTIME_METHODS=callMain,FS,stackSave,stackRestore \
-	--pre-js src/wasm/pre.js \
 	--post-js src/wasm/post.js
 
 SERVER_OS   := $(shell uname -s | tr '[:upper:]' '[:lower:]')
@@ -44,7 +43,7 @@ dist/worker.js: src/worker/worker.js
 
 wasm: dist/jq.js
 
-dist/jq.js: .jq-wasm.tag Makefile src/wasm/pre.js src/wasm/post.js
+dist/jq.js: .jq-wasm.tag Makefile src/wasm/post.js
 	@mkdir -p dist
 	$(DOCKER_RUN) emcc /jq/main.o /jq/libjq.a /jq/libonig.a $(EMCC_FLAGS) -o dist/jq.js
 
