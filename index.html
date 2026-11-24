@@ -1,316 +1,223 @@
 <!doctype html>
-<meta charset=utf-8>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>jq-wasm</title>
 <style>
+:root {
+    --bg: #f8f9fb;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --muted: #64748b;
+    --accent: #c2410c;
+    --error: #b91c1c;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
 
-html { box-sizing: border-box; font-size: 10px; height: 100vh; width: 100vw; }
-*, *:before, *:after { box-sizing: inherit; }
-body, ul, li  { margin: 0; padding: 0; }
-li { list-style: none; }
-p, h1, h2, h3, h4, h5, h6 { margin-top: 0; }
-a { text-decoration: none; }
-input { border-style: none; background: transparent; outline: none; }
-button { padding: 0; background: none; border: none; outline: none; }
-
+*, *::before, *::after { box-sizing: border-box; }
 
 body {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-  background-image: radial-gradient(circle at 0% 0%, #373b52, #252736 51%, #1d1e26);
-  overflow: hidden;
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.5 var(--mono);
 }
 
-.container {
-  display: flex;
-  flex-wrap: wrap;
-  flex-direction: row;
-  max-width: 1600px;
-  padding: 0 15px;
-  margin: 0 auto;
-}
-
-@-webkit-keyframes gradient {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 100% 0;
-  }
-}
-
-@keyframes gradient {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 100% 0;
-  }
-} 
-
-.query-input {
-    margin-top: 10% !important;
-    position: relative;
+/* Header, query and examples on top; the two panes fill the rest of the window. */
+.app {
     display: flex;
-    flex-direction: row;
-    width: 100%;
-    max-width: 600px;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 1200px;
+    height: 100vh;
+    height: 100dvh;
     margin: 0 auto;
-    border-radius: 2px;
-    padding: 1.4rem 2rem 1.6rem;
-    background: rgba(57, 63, 84, 0.8);
-}
-.query-input:after {
-  content: "";
-  position: absolute;
-  left: 0px;
-  right: 0px;
-  bottom: 0px;
-  z-index: 999;
-  height: 2px;
-  border-bottom-left-radius: 2px;
-  border-bottom-right-radius: 2px;
-  background-position: 0% 0%;
-  background: linear-gradient(to right, #B294FF, #57E6E6, #FEFFB8, #57E6E6, #B294FF, #57E6E6);
-  background-size: 500% auto;
-  -webkit-animation: gradient 3s linear infinite;
-          animation: gradient 3s linear infinite;
+    padding: 24px 16px;
 }
 
-.query-input input {
-  flex-grow: 1;
-  color: #BFD2FF;
-  font-size: 1.8rem;
-  line-height: 2.4rem;
-  vertical-align: middle;
-}
-.query-input input::-webkit-input-placeholder {
-  color: #7881A1;
-}
-
-button {
-    width: 300px;
-    height: 100px;
-    margin-top: 15px;
-    color: #FEFFB8;
-    font-size: 2.4rem;
-    line-height: 2.4rem;
-    vertical-align: middle;
-    transition: color .25s;
-    border: 3px solid;
-    padding: 1.4rem 2rem 1.6rem;
-    border-radius: 2px;
-}
-
-button:hover {
-  color: #B294FF;
-}
-
-.window { padding: 0 !important; }
-.window-header { 
+header {
     display: flex;
-    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 16px;
+}
+h1 { margin: 0; font-size: 14px; }
+header p { margin: 0; color: var(--muted); }
+header nav { display: flex; gap: 16px; margin-left: auto; }
+
+a, .examples button {
+    color: var(--text);
+    text-decoration: underline;
+    text-decoration-color: var(--border);
+    text-underline-offset: 3px;
+}
+a:hover, .examples button:hover, .examples button[aria-current="true"] {
+    color: var(--accent);
+    text-decoration-color: currentColor;
+}
+
+label, .label {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+input, textarea {
     width: 100%;
-    max-width: 600px;
-    padding: 1em; 
-    background: whitesmoke;
-    margin: 0 auto;
+    margin: 0;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: var(--surface);
+    color: inherit;
+    font: inherit;
 }
-.window-editor { height: 50vh; }
-.window-editor textarea {
-position: relative;
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 1em;
-  height:100%;
-  border: none; 
-  border-radius: 6px;
-  resize: none;
-  font-family:'PT Mono', monospace;
-  background: white;
-  white-space:pre-wrap;
-  word-wrap: break-word;
-  line-height: 1.25em;
+textarea { resize: none; }
+::placeholder { color: var(--muted); }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
+
+.examples {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    font-size: 13px;
+}
+.examples .label { display: inline; margin: 0 8px 0 0; }
+.examples ul { display: contents; }
+.examples li { list-style: none; }
+/* Separator after each link, so a wrapped line never starts with one. */
+.examples li:not(:last-child)::after { content: "·"; margin: 0 8px; color: var(--muted); }
+.examples button {
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    cursor: pointer;
 }
 
-h1.title {
-    text-align: center;
-    font-size: 2.4rem;
-    font-weight: normal;
-    margin-bottom: 1rem;
-    color: #f5f6ff;
+.panes {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
 }
-
-.input-error {
-    max-width: 600px;
-    min-height: 2rem;
-    margin: 0.8rem auto 0;
-    color: #ff9b9b;
-    font-family: 'PT Mono', monospace;
-    font-size: 1.4rem;
-    line-height: 2rem;
+.pane { display: flex; flex-direction: column; min-height: 0; }
+.pane textarea { flex: 1; min-height: 160px; }
+.pane-footer {
+    min-height: 1.5em;
+    margin: 4px 0 0;
+    color: var(--error);
+    font-size: 13px;
     overflow-wrap: anywhere;
 }
+#output.is-error { color: var(--error); }
 
-#res.is-error {
-    color: #b91c1c;
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 
+/* Narrow screens: stack everything and let the page scroll. */
+@media (max-width: 720px) {
+    .app { height: auto; padding-top: 16px; }
+    header nav { margin-left: 0; }
+    .panes { grid-template-columns: 1fr; }
+    .pane textarea { flex: none; height: 40vh; }
+    /* 16px stops iOS from zooming into the field on focus. */
+    input, textarea { font-size: 16px; }
+}
 </style>
+</head>
+<body>
+<div class="app">
+    <header>
+        <h1>jq-wasm</h1>
+        <p>jq 1.8.2 compiled to WebAssembly, running in your browser.</p>
+        <nav>
+            <a href="https://github.com/pboutes/jq-wasm">github</a>
+            <a href="https://jqlang.org/manual/">jq manual</a>
+        </nav>
+    </header>
 
-<html>
-    <body>
-        <div class="container">
-            <div style="flex-grow: 1;">
-                <div>
-                    <h1 class="title">JSON INPUT</h1>
-                </div>
-                <div class="window">
-                    <div class="window-editor">
-                        <textarea id="json-text"></textarea>
-                    </div>
-                </div>
-                <p id="json-error" class="input-error" aria-live="polite"></p>
-                <div class="query-input">
-                    <input id="query" type="text" placeholder="Enter JQ query"></input>
-                </div>
-            </div>
-            <div style="flex-grow: 1;">
-                <div>
-                    <h1 class="title">PARSING RESULT</h1>
-                </div>
-                <div class="window">
-                    <div class="window-editor">
-                        <textarea id="res"></textarea>
-                    </div>
-                </div>
-            </div>
+    <div>
+        <label for="query">query</label>
+        <input id="query" type="text" placeholder=".[] | .name" spellcheck="false" autocomplete="off" autocapitalize="off">
+    </div>
+
+    <nav class="examples" aria-label="examples">
+        <span class="label">examples:</span>
+        <ul id="examples"></ul>
+    </nav>
+
+    <main class="panes">
+        <div class="pane">
+            <label for="input">input</label>
+            <textarea id="input" placeholder="paste json here" spellcheck="false"></textarea>
+            <p id="input-error" class="pane-footer" aria-live="polite"></p>
         </div>
-        <div class="container">
-            <div style="flex-grow: 1;">
-                <button onclick="basic()">Basic example</button>
-            </div>
-            <div style="flex-grow: 1;">
-                <button onclick="pipe()">Pipe</button>
-            </div>
-            <div style="flex-grow: 1;">
-                <button onclick="destructuring()">Destructuring Alternative Operator</button>
-            </div>
-            <div style="flex-grow: 1;">
-                <button onclick="maths()">Maths expression</button>
-            </div>
-            <div style="flex-grow: 1;">
-                <button onclick="recursive()">Recursive descent</button>
-            </div>
-            <div style="flex-grow: 1;">
-                <button onclick="regexp()">Regexp capture</button>
-            </div>
-            <div style="flex-grow: 1;">
-                <button onclick="construct()">Variables / Symbolic bindings</button>
-            </div>
-            <div style="flex-grow: 1;">
-                <button onclick="defFunction()">Functions definition</button>
-            </div>
-            <div style="flex-grow: 1;">
-                <button onclick="hasKey()">has(key)</button>
-            </div>
-            <div style="flex-grow: 1;">
-                <button onclick="assignment()">Arithmetic assignment</button>
-            </div>
+        <div class="pane">
+            <label for="output">output</label>
+            <textarea id="output" readonly spellcheck="false"></textarea>
+            <p class="pane-footer" aria-hidden="true"></p>
         </div>
+    </main>
 
-    </body>
-</html>
-
-
+    <!-- Announces jq errors to screen readers; results are not announced. -->
+    <p id="output-status" class="sr-only" aria-live="polite"></p>
+</div>
 
 <script>
-if (window.Worker) {
+if (!window.Worker) {
+    console.warn('jq-wasm needs Web Worker support.');
+} else {
+    const EXAMPLES = [
+        {name: 'basic', json: [{name: 'JSON', good: true}, {name: 'XML', good: false}], query: '.[0].name'},
+        {name: 'pipe', json: [{name: 'JSON', good: true}, {name: 'XML', good: false}], query: '.[] | .name'},
+        {
+            name: 'destructuring',
+            json: [{a: 1, b: 2, c: {d: 3, e: 4}}, {a: 1, b: 2, c: [{d: 3, e: 4}]}],
+            query: '.[] as {$a, $b, c: {$d, $e}} ?// {$a, $b, c: [{$d, $e}]} | {$a, $b, $d, $e}',
+        },
+        {name: 'maths', json: 1, query: '(. + 2) * 5'},
+        {name: 'recursive descent', json: [[{a: 1}]], query: '..|.a?'},
+        {name: 'regexp capture', json: 'xyzzy-14', query: 'capture("(?<a>[a-z]+)-(?<n>[0-9]+)")'},
+        {
+            name: 'variables',
+            json: {
+                posts: [{title: 'Frist psot', author: 'anon'}, {title: 'A well-written article', author: 'person1'}],
+                realnames: {anon: 'Anonymous Coward', person1: 'Person McPherson'},
+            },
+            query: '.realnames as $names | .posts[] | {title, author: $names[.author]}',
+        },
+        {name: 'functions', json: [[1, 2], [10, 20]], query: 'def addvalue(f): . + [f]; map(addvalue(.[0]))'},
+        {name: 'has(key)', json: [{foo: 42}, {}], query: 'map(has("foo"))'},
+        {name: 'arithmetic assignment', json: {foo: 42}, query: '[.foo += 1, .foo *= 2, .foo -=1, .foo /= 2]'},
+    ];
 
-    const textElm = document.querySelector('#json-text');
     const queryElm = document.querySelector('#query');
-    const codeElm = document.querySelector('#res');
+    const inputElm = document.querySelector('#input');
+    const outputElm = document.querySelector('#output');
+    const inputErrorElm = document.querySelector('#input-error');
+    const outputStatusElm = document.querySelector('#output-status');
+    const examplesElm = document.querySelector('#examples');
 
-    function basic() {
-        textElm.value = JSON.stringify([{"name":"JSON", "good":true}, {"name":"XML", "good":false}])
-        queryElm.value = '.[0].name';
-        send();
-    }
-
-    function pipe() {
-        textElm.value = JSON.stringify([{"name":"JSON", "good":true}, {"name":"XML", "good":false}])
-        queryElm.value = '.[] | .name';
-        send();
-    }
-
-    function recursive() {
-        textElm.value = JSON.stringify([[{"a":1}]]);
-        queryElm.value = '..|.a?';
-        send();
-    }
-
-    function maths() {
-        textElm.value = '1';
-        queryElm.value = '(. + 2) * 5';
-        send();
-    }
-
-    function destructuring() {
-        textElm.value = JSON.stringify([{"a": 1, "b": 2, "c": {"d": 3, "e": 4}}, {"a": 1, "b": 2, "c": [{"d": 3, "e": 4}]}]);
-        queryElm.value = '.[] as {$a, $b, c: {$d, $e}} ?// {$a, $b, c: [{$d, $e}]} | {$a, $b, $d, $e}';
-        send()
-    }
-
-    function regexp() {
-        textElm.value = '"xyzzy-14"';
-        queryElm.value = 'capture("(?<a>[a-z]+)-(?<n>[0-9]+)")';
-        send();
-    }
-
-    function construct() {
-        textElm.value = JSON.stringify({
-            "posts": [{"title": "Frist psot", "author": "anon"},{"title": "A well-written article", "author": "person1"}],
-            "realnames": {"anon": "Anonymous Coward", "person1": "Person McPherson"}});
-        queryElm.value = '.realnames as $names | .posts[] | {title, author: $names[.author]}';
-        send();
-    }
-
-    function defFunction() {
-        textElm.value = JSON.stringify([[1,2],[10,20]]);
-        queryElm.value = 'def addvalue(f): . + [f]; map(addvalue(.[0]))';
-        send();
-    }
-
-    function hasKey() {
-        textElm.value = JSON.stringify([{"foo": 42}, {}]);
-        queryElm.value = 'map(has("foo"))';
-        send();
-    }
-
-    function assignment() {
-        textElm.value = JSON.stringify({"foo": 42});
-        queryElm.value = '[.foo += 1, .foo *= 2, .foo -=1, .foo /= 2]';
-        send();
-    }
-
-
-    //Create our web worker
-    const worker = new Worker('./dist/worker.js', { type: 'module' });
+    const worker = new Worker('./dist/worker.js', {type: 'module'});
 
     // Run the query once typing pauses, not on every keystroke.
     const DEBOUNCE_MS = 150;
     let pendingSend;
-    [textElm, queryElm].forEach(n => n.addEventListener('input', () => {
-        clearTimeout(pendingSend);
-        pendingSend = setTimeout(send, DEBOUNCE_MS);
-    }));
 
-    const jsonErrorElm = document.querySelector('#json-error');
     // False while the JSON input is blank or invalid: replies still in flight
-    // for an earlier input must not overwrite the cleared result.
+    // for an earlier input must not overwrite the cleared output.
     let inputOk = false;
 
     // Show invisible characters (zero-width space, BOM, no-break space...)
@@ -318,22 +225,27 @@ if (window.Worker) {
     const showInvisible = (text) => text.replace(/(?! )[\p{Cf}\p{Z}]/gu,
         ch => 'U+' + ch.codePointAt(0).toString(16).toUpperCase().padStart(4, '0'));
 
-    // Send json and query to process to our web worker
+    const showOutput = (text, isError) => {
+        outputElm.value = text;
+        outputElm.classList.toggle('is-error', isError);
+        outputStatusElm.textContent = isError ? text : '';
+    };
+
+    // Send json and query to the worker.
     const send = () => {
         clearTimeout(pendingSend);
-        const text = textElm.value;
+        const text = inputElm.value;
         let json;
         try {
             json = JSON.parse(text);
         } catch (e) {
             // Blank input is not an error, there is just nothing to process yet.
-            jsonErrorElm.textContent = text.trim() ? `Invalid JSON: ${showInvisible(e.message)}` : '';
+            inputErrorElm.textContent = text.trim() ? `invalid json: ${showInvisible(e.message)}` : '';
             inputOk = false;
-            codeElm.classList.remove('is-error');
-            codeElm.value = '';
+            showOutput('', false);
             return;
         }
-        jsonErrorElm.textContent = '';
+        inputErrorElm.textContent = '';
         inputOk = true;
         worker.postMessage({json, query: queryElm.value});
     };
@@ -342,14 +254,46 @@ if (window.Worker) {
     worker.onmessage = (e) => {
         if (!inputOk) return;
         const {ok, result, error} = e.data;
-        codeElm.classList.toggle('is-error', !ok);
-        codeElm.value = ok ? JSON.stringify(result, null, 2) : error.trim();
+        showOutput(ok ? JSON.stringify(result, null, 2) : error.trim(), !ok);
+    };
+
+    // An example link stays marked until the query or input is edited.
+    const exampleButtons = EXAMPLES.map((example) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = example.name;
+        button.addEventListener('click', () => loadExample(example, button));
+        const item = document.createElement('li');
+        item.append(button);
+        examplesElm.append(item);
+        return button;
+    });
+
+    const markExample = (current) => {
+        for (const button of exampleButtons) {
+            if (button === current) button.setAttribute('aria-current', 'true');
+            else button.removeAttribute('aria-current');
+        }
+    };
+
+    const loadExample = (example, button) => {
+        queryElm.value = example.query;
+        inputElm.value = JSON.stringify(example.json, null, 2);
+        markExample(button);
+        send();
+    };
+
+    for (const field of [queryElm, inputElm]) {
+        field.addEventListener('input', () => {
+            markExample(null);
+            clearTimeout(pendingSend);
+            pendingSend = setTimeout(send, DEBOUNCE_MS);
+        });
     }
 
-    // Open on the first example rather than three empty boxes.
-    basic();
-
-} else {
-    console.warn("No web worker support 😥");
+    // Open on the first example rather than empty boxes.
+    loadExample(EXAMPLES[0], exampleButtons[0]);
 }
 </script>
+</body>
+</html>
